@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "./components/Provider";
 import SignIn from "./components/SignIn";
-import TicTacToe from "./components/TicTacToe";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-gray-800">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
