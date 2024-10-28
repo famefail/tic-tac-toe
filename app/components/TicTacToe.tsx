@@ -3,23 +3,25 @@ import React, { useEffect, useRef, useState } from "react";
 
 const TicTacToe = () => {
   const initGame = ["", "", "", "", "", "", "", "", ""]
-  let [point, setPoint] = useState(localStorage.getItem('point'))
-  let [winStreak, setWinStreak] = useState(localStorage.getItem('winStreak'))
-  let [endGamePopup, setEndGamePopup] = useState(false);
-  let [data, setData] = useState(initGame)
-  let [count, setCount] = useState(0);
-  let [lock, setLock] = useState(false);
-  let box1 = useRef(null)
-  let box2 = useRef(null)
-  let box3 = useRef(null)
-  let box4 = useRef(null)
-  let box5 = useRef(null)
-  let box6 = useRef(null)
-  let box7 = useRef(null)
-  let box8 = useRef(null)
-  let box9 = useRef(null)
+  const [point, setPoint] = useState(localStorage.getItem('point'))
+  const [textStatus, setTextStatus] = useState('')
+  const [winStreak, setWinStreak] = useState(localStorage.getItem('winStreak'))
+  const [playerTurn, setPlayerTurn] = useState(true);
+  const [endGamePopup, setEndGamePopup] = useState(false);
+  const [data, setData] = useState(initGame)
+  const [count, setCount] = useState(0);
+  const [lock, setLock] = useState(false);
+  const box1 = useRef(null)
+  const box2 = useRef(null)
+  const box3 = useRef(null)
+  const box4 = useRef(null)
+  const box5 = useRef(null)
+  const box6 = useRef(null)
+  const box7 = useRef(null)
+  const box8 = useRef(null)
+  const box9 = useRef(null)
 
-  let box_array = [box1, box2, box3, box4, box5, box6, box7, box8, box9]
+  const box_array = [box1, box2, box3, box4, box5, box6, box7, box8, box9]
 
   useEffect(() => {
     if (!point) {
@@ -30,7 +32,18 @@ const TicTacToe = () => {
     }
   }, [])
 
-  const toggle = (evt: any, num: any) => {
+  useEffect(() => {
+    if (!playerTurn && !lock) {
+      const availableMoves = data
+        .map((cell, index) => (cell === "" ? index : null))
+        .filter((index) => index !== null)
+
+      const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+      botTurn(randomMove);
+    }
+  }, [playerTurn, lock]);
+
+  const toggle = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: any) => {
     if (lock) {
       return 0
     }
@@ -38,20 +51,31 @@ const TicTacToe = () => {
 
       return;
     }
-    if (count % 2 === 0) {
-      evt.target.innerHTML = '<div>x</div>';
-      data[num] = "x";
-      setCount(++count);
-    }
-    else {
-      evt.target.innerHTML = '<div>o</div>';
-      data[num] = "0";
-      setCount(++count);
-    }
+    const target = evt.currentTarget;
+    target.innerHTML = '<div>x</div>';
+    data[num] = "x";
+    const newCount = count + 1;
+    setCount(newCount)
     const newData = [...data]
     setData(newData);
     checkWin(data)
+    setPlayerTurn((player) => !player)
   }
+
+  const botTurn = async (random: number) => {
+    if (data[random] || lock) return;
+    const newBoard = [...data];
+    newBoard[random] = "o";
+    setData(newBoard);
+    box_array.forEach((box, index) => {
+      if (random === index && box.current) {
+        const target = box.current as HTMLButtonElement
+        target.innerHTML = '<div>o</div>';
+      }
+    })
+    checkWin(newBoard)
+    setPlayerTurn((player) => !player)
+  };
 
   const resetGame = () => {
     setData(initGame);
@@ -79,7 +103,11 @@ const TicTacToe = () => {
 
     for (const [a, b, c] of winConditions) {
       if (data[a] === data[b] && data[b] === data[c] && data[a] !== "") {
-        won(data);
+        if (playerTurn) {
+          won();
+        } else {
+          lost();
+        }
         return true;
       }
     }
@@ -88,37 +116,46 @@ const TicTacToe = () => {
   };
 
 
-  const won = (winner: any) => {
+  const won = () => {
     savePoint(point)
     setLock(true)
     setEndGamePopup(true)
   }
 
+  const lost = () => {
+    setTextStatus("Lose :(")
+    setEndGamePopup(true)
+    setLock(true)
+    localStorage.setItem('winStreak', '0')
+  }
+
   const savePoint = (point: string | null) => {
     let parseStreak = parseInt(winStreak ?? '0')
     parseStreak++
-    const stringWinStreak = parseStreak.toString();    
+    const stringWinStreak = parseStreak.toString();
     setWinStreak(stringWinStreak)
     localStorage.setItem('winStreak', stringWinStreak)
 
     let parsePoint = parseInt(point ?? '0')
-    if(stringWinStreak === '3'){
+    if (stringWinStreak === '3') {
       parsePoint += 3;
       localStorage.setItem('winStreak', '0')
-    }else{
+      setTextStatus("Win! +3 point")
+    } else {
+      setTextStatus("Win! +1 point")
       parsePoint++
     }
     const stringPoint = parsePoint.toString();
     setPoint(stringPoint)
     localStorage.setItem('point', stringPoint)
-    
+
   }
 
   return (
     <div className="text-center">
       {endGamePopup && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div className="bg-white p-4 rounded shadow-lg max-w-md w-full ">
-          <div >{`You Win! +${1}`}</div>
+          <div >{textStatus}</div>
           <div>{point}</div>
           <button onClick={resetGame} className="text-red-500">
             Close
