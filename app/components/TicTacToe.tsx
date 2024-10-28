@@ -1,6 +1,6 @@
 "use client"
 import { signIn, useSession } from "next-auth/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const TicTacToe = () => {
   const initGame = ["", "", "", "", "", "", "", "", ""]
@@ -13,7 +13,7 @@ const TicTacToe = () => {
   const [count, setCount] = useState(0);
   const [lock, setLock] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const box1 = useRef(null)
   const box2 = useRef(null)
   const box3 = useRef(null)
@@ -24,9 +24,25 @@ const TicTacToe = () => {
   const box8 = useRef(null)
   const box9 = useRef(null)
 
-  const box_array = [box1, box2, box3, box4, box5, box6, box7, box8, box9]
+  const boxArray = useMemo(() => [
+    box1, box2, box3, box4, box5, box6, box7, box8, box9
+  ], [box1, box2, box3, box4, box5, box6, box7, box8, box9]);
 
-  const checkWin = (data: string[]) => {
+  const won = () => {
+    savePoint(point)
+    setLock(true)
+    setEndGamePopup(true)
+  }
+
+  const lost = () => {
+    decresePoint(point)
+    setTextStatus("Lose :(")
+    setEndGamePopup(true)
+    setLock(true)
+  }
+
+
+  const checkWin = useCallback((data: string[]) => {
     const winConditions = [
       [0, 1, 2],
       [3, 4, 5],
@@ -37,7 +53,6 @@ const TicTacToe = () => {
       [0, 4, 8],
       [2, 4, 6],
     ];
-
 
     for (const [a, b, c] of winConditions) {
       if (data[a] === data[b] && data[b] === data[c] && data[a] !== "") {
@@ -51,14 +66,14 @@ const TicTacToe = () => {
     }
 
     return false;
-  };
+  },[lost, playerTurn, won]);
 
   const botTurn = useCallback((random: number) => {
     if (data[random] || lock) return;
     const newBoard = [...data];
     newBoard[random] = "o";
     setData(newBoard);
-    box_array.forEach((box, index) => {
+    boxArray.forEach((box, index) => {
       if (random === index && box.current) {
         const target = box.current as HTMLButtonElement
         target.innerHTML = '<div class= "text-white flex w-full items-center justify-center text-7xl	">o</div>';
@@ -66,7 +81,7 @@ const TicTacToe = () => {
     })
     checkWin(newBoard)
     setPlayerTurn((player) => !player)
-  }, [checkWin, data, lock, box_array])
+  }, [checkWin, data, lock, boxArray])
 
 
 
@@ -98,25 +113,12 @@ const TicTacToe = () => {
     setData(initGame);
     setLock(false);
     setEndGamePopup(false)
-    box_array.forEach(e => {
+    boxArray.forEach(e => {
       if (e.current) {
         const target = e.current as HTMLButtonElement
         target.innerHTML = "";
       }
     });
-  }
-
-  const won = () => {
-    savePoint(point)
-    setLock(true)
-    setEndGamePopup(true)
-  }
-
-  const lost = () => {
-    decresePoint(point)
-    setTextStatus("Lose :(")
-    setEndGamePopup(true)
-    setLock(true)
   }
 
   const decresePoint = (point: string | null) => {
@@ -194,7 +196,7 @@ const TicTacToe = () => {
             <div className="grid grid-cols-3">
               {data.map((data: string, index: number) => {
                 const key = `btn-block-${index}`
-                return <button key={key} ref={box_array[index]} onClick={(e) => { yourTurn(e, index) }} className="flex h-24 w-24 bg-slate-400 border-slate-300 rounded cursor-pointer border-4 m-3 hover:border-slate-400"></button>
+                return <button key={key} ref={boxArray[index]} onClick={(e) => { yourTurn(e, index) }} className="flex h-24 w-24 bg-slate-400 border-slate-300 rounded cursor-pointer border-4 m-3 hover:border-slate-400"></button>
               })}
             </div>
           </div>
