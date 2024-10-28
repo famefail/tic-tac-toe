@@ -1,11 +1,11 @@
 "use client"
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 const TicTacToe = () => {
   const initGame = ["", "", "", "", "", "", "", "", ""]
-  const [point, setPoint] = useState(localStorage.getItem('point'))
+  const [point, setPoint] = useState('')
   const [textStatus, setTextStatus] = useState('')
-  const [winStreak, setWinStreak] = useState(localStorage.getItem('winStreak'))
+  const [winStreak, setWinStreak] = useState('')
   const [playerTurn, setPlayerTurn] = useState(true);
   const [endGamePopup, setEndGamePopup] = useState(false);
   const [data, setData] = useState(initGame)
@@ -22,71 +22,6 @@ const TicTacToe = () => {
   const box9 = useRef(null)
 
   const box_array = [box1, box2, box3, box4, box5, box6, box7, box8, box9]
-
-  useEffect(() => {
-    if (!point) {
-      localStorage.setItem('point', '0')
-    }
-    if (!winStreak) {
-      localStorage.setItem('winStreak', '0')
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!playerTurn && !lock) {
-      const availableMoves = data
-        .map((cell, index) => (cell === "" ? index : null))
-        .filter((index) => index !== null)
-
-      const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-      botTurn(randomMove);
-    }
-  }, [playerTurn, lock]);
-
-  const toggle = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: any) => {
-    if (lock) {
-      return 0
-    }
-    if (data[num] !== "") {
-
-      return;
-    }
-    const target = evt.currentTarget;
-    target.innerHTML = '<div>x</div>';
-    data[num] = "x";
-    const newCount = count + 1;
-    setCount(newCount)
-    const newData = [...data]
-    setData(newData);
-    checkWin(data)
-    setPlayerTurn((player) => !player)
-  }
-
-  const botTurn = async (random: number) => {
-    if (data[random] || lock) return;
-    const newBoard = [...data];
-    newBoard[random] = "o";
-    setData(newBoard);
-    box_array.forEach((box, index) => {
-      if (random === index && box.current) {
-        const target = box.current as HTMLButtonElement
-        target.innerHTML = '<div>o</div>';
-      }
-    })
-    checkWin(newBoard)
-    setPlayerTurn((player) => !player)
-  };
-
-  const resetGame = () => {
-    setData(initGame);
-    setLock(false);
-    setEndGamePopup(false)
-    box_array.forEach((e: any) => {
-      e.current.innerHTML = "";
-    });
-  }
-
-
 
   const checkWin = (data: string[]) => {
     const winConditions = [
@@ -115,6 +50,55 @@ const TicTacToe = () => {
     return false;
   };
 
+  const botTurn = useCallback((random: number) => {
+    if (data[random] || lock) return;
+    const newBoard = [...data];
+    newBoard[random] = "o";
+    setData(newBoard);
+    box_array.forEach((box, index) => {
+      if (random === index && box.current) {
+        const target = box.current as HTMLButtonElement
+        target.innerHTML = '<div>o</div>';
+      }
+    })
+    checkWin(newBoard)
+    setPlayerTurn((player) => !player)
+  }, [checkWin, data, lock])
+
+
+
+  const toggle = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: number) => {
+    if (lock) {
+      return 0
+    }
+    if (data[num] !== "") {
+
+      return;
+    }
+    const target = evt.currentTarget;
+    target.innerHTML = '<div>x</div>';
+    data[num] = "x";
+    const newCount = count + 1;
+    setCount(newCount)
+    const newData = [...data]
+    setData(newData);
+    checkWin(data)
+    setPlayerTurn((player) => !player)
+  }
+
+
+
+  const resetGame = () => {
+    setData(initGame);
+    setLock(false);
+    setEndGamePopup(false)
+    box_array.forEach(e => {
+      if (e.current) {
+        const target = e.current as HTMLButtonElement
+        target.innerHTML = "";
+      }
+    });
+  }
 
   const won = () => {
     savePoint(point)
@@ -150,7 +134,27 @@ const TicTacToe = () => {
     localStorage.setItem('point', stringPoint)
 
   }
+  useEffect(() => {
+    if (!point) {
+     localStorage.setItem('point', '0')
+     setPoint('0')
+    }
+    if (!winStreak) {
+      localStorage.setItem('winStreak', '0')
+      setWinStreak('0')
+    }
+  }, [point, winStreak])
 
+  useEffect(() => {
+    if (!playerTurn && !lock) {
+      const availableMoves = data
+        .map((cell, index) => (cell === "" ? index : null))
+        .filter((index) => index !== null)
+
+      const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+      botTurn(randomMove);
+    }
+  }, [playerTurn, lock, botTurn, data]);
   return (
     <div className="text-center">
       {endGamePopup && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
