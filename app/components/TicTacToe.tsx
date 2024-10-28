@@ -1,4 +1,5 @@
 "use client"
+import { signIn, useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 const TicTacToe = () => {
@@ -11,6 +12,8 @@ const TicTacToe = () => {
   const [data, setData] = useState(initGame)
   const [count, setCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
+  const { data: session, status } = useSession();
   const box1 = useRef(null)
   const box2 = useRef(null)
   const box3 = useRef(null)
@@ -58,35 +61,38 @@ const TicTacToe = () => {
     box_array.forEach((box, index) => {
       if (random === index && box.current) {
         const target = box.current as HTMLButtonElement
-        target.innerHTML = '<div>o</div>';
+        target.innerHTML = '<div class= "text-white flex w-full items-center justify-center text-7xl	">o</div>';
       }
     })
     checkWin(newBoard)
     setPlayerTurn((player) => !player)
-  }, [checkWin, data, lock])
+  }, [checkWin, data, lock, box_array])
 
 
 
-  const toggle = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: number) => {
-    if (lock) {
-      return 0
+  const yourTurn = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: number) => {
+    if (status === 'authenticated') {
+      if (lock) {
+        return 0
+      }
+      if (data[num] !== "") {
+
+        return;
+      }
+      const target = evt.currentTarget;
+      target.innerHTML = '<div class="text-gray-800 flex w-full items-center justify-center text-7xl	">x</div>';
+      data[num] = "x";
+      const newCount = count + 1;
+      setCount(newCount)
+      const newData = [...data]
+      setData(newData);
+      checkWin(data)
+      setPlayerTurn((player) => !player)
     }
-    if (data[num] !== "") {
-
-      return;
+    else {
+      setIsLogin((login: boolean) => !login)
     }
-    const target = evt.currentTarget;
-    target.innerHTML = '<div>x</div>';
-    data[num] = "x";
-    const newCount = count + 1;
-    setCount(newCount)
-    const newData = [...data]
-    setData(newData);
-    checkWin(data)
-    setPlayerTurn((player) => !player)
   }
-
-
 
   const resetGame = () => {
     setData(initGame);
@@ -107,9 +113,20 @@ const TicTacToe = () => {
   }
 
   const lost = () => {
+    decresePoint(point)
     setTextStatus("Lose :(")
     setEndGamePopup(true)
     setLock(true)
+  }
+
+  const decresePoint = (point: string | null) => {
+    let parsePoint = parseInt(point ?? '0')
+    if (parsePoint > 0) {
+      parsePoint--
+    }
+    const stringPoint = parsePoint.toString();
+    setPoint(stringPoint)
+    localStorage.setItem('point', stringPoint)
     localStorage.setItem('winStreak', '0')
   }
 
@@ -121,10 +138,10 @@ const TicTacToe = () => {
     localStorage.setItem('winStreak', stringWinStreak)
 
     let parsePoint = parseInt(point ?? '0')
-    if (stringWinStreak === '3') {
-      parsePoint += 3;
+    if (stringWinStreak === '2') {
+      parsePoint += 2;
       localStorage.setItem('winStreak', '0')
-      setTextStatus("Win! +3 point")
+      setTextStatus("Win! +2 point")
     } else {
       setTextStatus("Win! +1 point")
       parsePoint++
@@ -132,17 +149,13 @@ const TicTacToe = () => {
     const stringPoint = parsePoint.toString();
     setPoint(stringPoint)
     localStorage.setItem('point', stringPoint)
-
   }
+
   useEffect(() => {
-    if (!point) {
-     localStorage.setItem('point', '0')
-     setPoint('0')
-    }
-    if (!winStreak) {
-      localStorage.setItem('winStreak', '0')
-      setWinStreak('0')
-    }
+    const storePoint = localStorage.getItem('point')
+    setPoint(storePoint ?? '0')
+    const storeWinStreak = localStorage.getItem('winStreak')
+    setWinStreak(storeWinStreak ?? '0')
   }, [point, winStreak])
 
   useEffect(() => {
@@ -150,13 +163,13 @@ const TicTacToe = () => {
       const availableMoves = data
         .map((cell, index) => (cell === "" ? index : null))
         .filter((index) => index !== null)
-
       const randomMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
       botTurn(randomMove);
     }
   }, [playerTurn, lock, botTurn, data]);
+
   return (
-    <div className="text-center">
+    <>
       {endGamePopup && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div className="bg-white p-4 rounded shadow-lg max-w-md w-full ">
           <div >{textStatus}</div>
@@ -166,20 +179,29 @@ const TicTacToe = () => {
           </button>
         </div>
       </div>}
-
-      <h1 className="text-white text-6xl flex justify-center items-center">TicTacToe {point}</h1>
-      <div className="flex justify-center">
-        <div className="flex-row justify-center"  >
-          <div className="grid grid-cols-3">
-            {data.map((data: string, index: number) => {
-              const key = `btn-block-${index}`
-              return <button key={key} ref={box_array[index]} onClick={(e) => { toggle(e, index) }} className="flex h-24 w-24 bg-slate-400 border-slate-300 rounded cursor-pointer border-4 m-3 hover:border-slate-400"></button>
-            })}
+      {isLogin && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div className="bg-white p-4 rounded shadow-lg max-w-md w-full ">
+          <div >Please Sign In</div>
+          <button onClick={() => signIn()} className="text-red-500">
+            Sign In
+          </button>
+        </div>
+      </div>}
+      <div className="text-center">
+        <h1 className="text-white text-6xl flex justify-center items-center">TicTacToe {status === 'authenticated' && point}</h1>
+        <div className="flex justify-center">
+          <div className="flex-row justify-center"  >
+            <div className="grid grid-cols-3">
+              {data.map((data: string, index: number) => {
+                const key = `btn-block-${index}`
+                return <button key={key} ref={box_array[index]} onClick={(e) => { yourTurn(e, index) }} className="flex h-24 w-24 bg-slate-400 border-slate-300 rounded cursor-pointer border-4 m-3 hover:border-slate-400"></button>
+              })}
+            </div>
           </div>
         </div>
+        <button onClick={resetGame} className="w-32 h-16 border-none cursor-pointer bg-slate-400 rounded-full my-8">Reset</button>
       </div>
-      <button onClick={resetGame} className="w-32 h-16 border-none cursor-pointer bg-slate-400 rounded-full my-8">Reset</button>
-    </div>
+    </>
   )
 }
 export default TicTacToe
