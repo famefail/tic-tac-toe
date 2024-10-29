@@ -156,10 +156,10 @@ const TicTacToe = () => {
     localStorage.setItem('winStreak', stringWinStreak)
 
     let parsePoint = parseInt(point ?? '0')
-    if (stringWinStreak === '2') {
+    if (stringWinStreak === '3') {
       parsePoint += 2;
       localStorage.setItem('winStreak', '0')
-      setHeader("You Win!")
+      setHeader("You Win Steak x3!")
       setDescription(`Your Point is ${point} (+2)`)
     } else {
       setHeader("You Win!")
