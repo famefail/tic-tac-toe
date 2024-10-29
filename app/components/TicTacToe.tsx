@@ -1,6 +1,7 @@
 "use client"
 import { signIn, useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Popup from "./Popup";
 
 const TicTacToe = () => {
   const initGame = ["", "", "", "", "", "", "", "", ""]
@@ -9,6 +10,7 @@ const TicTacToe = () => {
   const [winStreak, setWinStreak] = useState('')
   const [playerTurn, setPlayerTurn] = useState(true);
   const [endGamePopup, setEndGamePopup] = useState(false);
+  const [description, setDescription] = useState('');
   const [data, setData] = useState(initGame)
   const [count, setCount] = useState(0);
   const [lock, setLock] = useState(false);
@@ -29,7 +31,7 @@ const TicTacToe = () => {
   ], [box1, box2, box3, box4, box5, box6, box7, box8, box9]);
 
   const won = () => {
-    savePoint(point)
+    incresePoint(point)
     setLock(true)
     setEndGamePopup(true)
   }
@@ -37,6 +39,7 @@ const TicTacToe = () => {
   const lost = () => {
     decresePoint(point)
     setTextStatus("Lose :(")
+    setDescription(`Your Point is ${point} (-1)`)
     setEndGamePopup(true)
     setLock(true)
   }
@@ -66,7 +69,7 @@ const TicTacToe = () => {
     }
 
     return false;
-  },[lost, playerTurn, won]);
+  }, [lost, playerTurn, won]);
 
   const botTurn = useCallback((random: number) => {
     if (data[random] || lock) return;
@@ -132,7 +135,7 @@ const TicTacToe = () => {
     localStorage.setItem('winStreak', '0')
   }
 
-  const savePoint = (point: string | null) => {
+  const incresePoint = (point: string | null) => {
     let parseStreak = parseInt(winStreak ?? '0')
     parseStreak++
     const stringWinStreak = parseStreak.toString();
@@ -143,10 +146,12 @@ const TicTacToe = () => {
     if (stringWinStreak === '2') {
       parsePoint += 2;
       localStorage.setItem('winStreak', '0')
-      setTextStatus("Win! +2 point")
+      setTextStatus("You Win!")
+      setDescription(`Your Point is ${point} (+1)`)
     } else {
-      setTextStatus("Win! +1 point")
+      setTextStatus("You Win!")
       parsePoint++
+      setDescription(`Your Point is ${point} (+2)`)
     }
     const stringPoint = parsePoint.toString();
     setPoint(stringPoint)
@@ -172,23 +177,8 @@ const TicTacToe = () => {
 
   return (
     <>
-      {endGamePopup && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-        <div className="bg-white p-4 rounded shadow-lg max-w-md w-full ">
-          <div >{textStatus}</div>
-          <div>{point}</div>
-          <button onClick={resetGame} className="text-red-500">
-            Close
-          </button>
-        </div>
-      </div>}
-      {isLogin && <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-        <div className="bg-white p-4 rounded shadow-lg max-w-md w-full ">
-          <div >Please Sign In</div>
-          <button onClick={() => signIn()} className="text-red-500">
-            Sign In
-          </button>
-        </div>
-      </div>}
+      <Popup isVisible={endGamePopup} header={textStatus} description={description} onClick={resetGame} />
+      <Popup isVisible={isLogin} header={"Sign In"} description="Please sign in before play." onClick={signIn} />
       <div className="text-center">
         <h1 className="text-white text-6xl flex justify-center items-center">TicTacToe {status === 'authenticated' && point}</h1>
         <div className="flex justify-center">
@@ -201,7 +191,7 @@ const TicTacToe = () => {
             </div>
           </div>
         </div>
-        <button onClick={resetGame} className="w-32 h-16 border-none cursor-pointer bg-slate-400 rounded-full my-8">Reset</button>
+        <button onClick={resetGame} className="w-32 h-16 border-none cursor-pointer bg-slate-400  rounded-full my-8 text-white">Reset</button>
       </div>
     </>
   )
