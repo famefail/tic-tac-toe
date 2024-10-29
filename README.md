@@ -4,5 +4,4 @@
 3. หากผู้เล่นแพ้บอทจะเสีย 1 แต้ม
 4. หาผู้เล่นชนะบอทติดต่อกัน 3 ครั้ง ผู้เล่นจะได้รับ 2 แต้ม
 
-เดโม่ [https://tic-tac-toe-theta-one-17.vercel.app] (https://tic-tac-toe-theta-one-17.vercel.app/) 
-"# tic-tac-toe" 
+เดโม่ [https://tic-tac-toe-theta-one-17.vercel.app]
