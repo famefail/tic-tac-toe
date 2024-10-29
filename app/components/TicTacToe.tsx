@@ -160,11 +160,11 @@ const TicTacToe = () => {
       parsePoint += 2;
       localStorage.setItem('winStreak', '0')
       setHeader("You Win!")
-      setDescription(`Your Point is ${point} (+1)`)
+      setDescription(`Your Point is ${point} (+2)`)
     } else {
       setHeader("You Win!")
       parsePoint++
-      setDescription(`Your Point is ${point} (+2)`)
+      setDescription(`Your Point is ${point} (+1)`)
     }
     const stringPoint = parsePoint.toString();
     setPoint(stringPoint)
@@ -190,8 +190,8 @@ const TicTacToe = () => {
 
   return (
     <>
-      <Popup isVisible={endGamePopup} header={header} description={description} onClick={resetGame} />
-      <Popup isVisible={isLogin} header={"Sign In"} description="Please sign in before play." onClick={signIn} />
+      <Popup isVisible={endGamePopup} header={header} description={description} btnText="Next Game" onClick={resetGame} />
+      <Popup isVisible={isLogin} header={"Sign In"} description="Please sign in before playing the game." btnText="Sign In" onClick={signIn} />
       <div className="text-center">
         <h1 className="text-white text-6xl flex justify-center items-center">TicTacToe {status === 'authenticated' && point}</h1>
         <div className="flex justify-center">
@@ -204,7 +204,6 @@ const TicTacToe = () => {
             </div>
           </div>
         </div>
-        <button onClick={resetGame} className="w-32 h-16 border-none cursor-pointer bg-slate-400  rounded-full my-8 text-white">Reset</button>
       </div>
     </>
   )
