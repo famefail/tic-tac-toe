@@ -74,7 +74,7 @@ const TicTacToe = () => {
     }
 
     return false;
-  }, [lost, playerTurn, won]);
+  }, [count, draw, lost, playerTurn, won]);
 
   const botTurn = useCallback((random: number) => {
     if (data[random] || lock) return;
@@ -91,7 +91,7 @@ const TicTacToe = () => {
     setCount(newCount)
     checkWin(newBoard)
     setPlayerTurn((player) => !player)
-  }, [checkWin, data, lock, boxArray])
+  }, [count, checkWin, data, lock, boxArray])
 
   const yourTurn = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: number) => {
     if (status === 'authenticated') {
