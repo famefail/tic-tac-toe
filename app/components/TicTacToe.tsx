@@ -6,7 +6,7 @@ import Popup from "./Popup";
 const TicTacToe = () => {
   const initGame = ["", "", "", "", "", "", "", "", ""]
   const [point, setPoint] = useState('')
-  const [textStatus, setTextStatus] = useState('')
+  const [header, setHeader] = useState('')
   const [winStreak, setWinStreak] = useState('')
   const [playerTurn, setPlayerTurn] = useState(true);
   const [endGamePopup, setEndGamePopup] = useState(false);
@@ -32,18 +32,21 @@ const TicTacToe = () => {
 
   const won = () => {
     incresePoint(point)
-    setLock(true)
     setEndGamePopup(true)
+    setLock(true)
+  }
+
+  const draw = () => {
+    drawPoint(point)
+    setEndGamePopup(true)
+    setLock(true)
   }
 
   const lost = () => {
     decresePoint(point)
-    setTextStatus("Lose :(")
-    setDescription(`Your Point is ${point} (-1)`)
     setEndGamePopup(true)
     setLock(true)
   }
-
 
   const checkWin = useCallback((data: string[]) => {
     const winConditions = [
@@ -56,7 +59,6 @@ const TicTacToe = () => {
       [0, 4, 8],
       [2, 4, 6],
     ];
-
     for (const [a, b, c] of winConditions) {
       if (data[a] === data[b] && data[b] === data[c] && data[a] !== "") {
         if (playerTurn) {
@@ -66,6 +68,9 @@ const TicTacToe = () => {
         }
         return true;
       }
+    }
+    if (count === 8) {
+      draw();
     }
 
     return false;
@@ -82,11 +87,11 @@ const TicTacToe = () => {
         target.innerHTML = '<div class= "text-white flex w-full items-center justify-center text-7xl	">o</div>';
       }
     })
+    const newCount = count + 1;
+    setCount(newCount)
     checkWin(newBoard)
     setPlayerTurn((player) => !player)
   }, [checkWin, data, lock, boxArray])
-
-
 
   const yourTurn = async (evt: React.MouseEvent<HTMLButtonElement, MouseEvent>, num: number) => {
     if (status === 'authenticated') {
@@ -114,17 +119,20 @@ const TicTacToe = () => {
 
   const resetGame = () => {
     setData(initGame);
-    setLock(false);
-    setEndGamePopup(false)
+    setCount(0)
     boxArray.forEach(e => {
       if (e.current) {
         const target = e.current as HTMLButtonElement
         target.innerHTML = "";
       }
     });
+    setLock(false);
+    setEndGamePopup(false)
   }
 
   const decresePoint = (point: string | null) => {
+    setHeader("Lose :(")
+    setDescription(`Your Point is ${point} (-1)`)
     let parsePoint = parseInt(point ?? '0')
     if (parsePoint > 0) {
       parsePoint--
@@ -133,6 +141,11 @@ const TicTacToe = () => {
     setPoint(stringPoint)
     localStorage.setItem('point', stringPoint)
     localStorage.setItem('winStreak', '0')
+  }
+
+  const drawPoint = (point: string | null) => {
+    setHeader("Draw")
+    setDescription(`Your Point is ${point}`)
   }
 
   const incresePoint = (point: string | null) => {
@@ -146,10 +159,10 @@ const TicTacToe = () => {
     if (stringWinStreak === '2') {
       parsePoint += 2;
       localStorage.setItem('winStreak', '0')
-      setTextStatus("You Win!")
+      setHeader("You Win!")
       setDescription(`Your Point is ${point} (+1)`)
     } else {
-      setTextStatus("You Win!")
+      setHeader("You Win!")
       parsePoint++
       setDescription(`Your Point is ${point} (+2)`)
     }
@@ -177,7 +190,7 @@ const TicTacToe = () => {
 
   return (
     <>
-      <Popup isVisible={endGamePopup} header={textStatus} description={description} onClick={resetGame} />
+      <Popup isVisible={endGamePopup} header={header} description={description} onClick={resetGame} />
       <Popup isVisible={isLogin} header={"Sign In"} description="Please sign in before play." onClick={signIn} />
       <div className="text-center">
         <h1 className="text-white text-6xl flex justify-center items-center">TicTacToe {status === 'authenticated' && point}</h1>
